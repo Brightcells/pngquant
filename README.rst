@@ -4,10 +4,10 @@ pngquant
 
 A Python Wrapper of pngquant
 
+Install Pngquant First. See https://pngquant.org/
+
 Installation
 ============
-
-Install Pngquant First. See https://pngquant.org/
 
 ::
 
@@ -30,8 +30,8 @@ Method
 
 ::
 
-    def config(self, quant_file=None, min_quality=None, max_quality=None, quant_deep=None, tmp_file=None):
+    def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
 
-    def quant_data(self, data=None, dst=None, delete=True):
+    def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
 
-    def quant_image(self, image=None, override=True, delete=True):
+    def quant_image(self, image=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True):
