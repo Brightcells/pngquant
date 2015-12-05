@@ -24,4 +24,6 @@ def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None
 def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
 
 def quant_image(self, image=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True):
+
+def quant_dir(self, dir=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True, topdown=True):
 ```

@@ -26,6 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from __future__ import division
 
+import imghdr
 import os
 import shutil
 import subprocess
@@ -51,25 +52,31 @@ class PngQuant(object):
 
         :return:
         """
+        # Pngquant Config
         self.command_str = ur'{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
         self.quant_file = ''
         self.min_quality = 65
         self.max_quality = 80
+        # Compress Config
         self.ndeep = 100
         self.ndigits = 4
         self.tmp_file = '/tmp/quant.tmp.png'
         self.command_line = self.set_command_line()
+        # Error Description
+        self.err_data = u'data not found'
+        self.err_image = u'image not found'
+        self.err_pngquant = u'pngquant not found'
 
     def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
         """
         Config Set
 
-        :param quant_file: pngquant exec file
+        :param quant_file: Pngquant Exec File
         :param min_quality: Min Quality
         :param max_quality: Max Quality
         :param ndeep: Compress Times
-        :param ndigits: float precision
-        :param tmp_file:
+        :param ndigits: Float Precision
+        :param tmp_file: Tmp File Image Save As
         :return:
         """
         self.quant_file = quant_file or self.quant_file
@@ -92,7 +99,7 @@ class PngQuant(object):
         """
         Whether File Exists
 
-        :param filename: file to judge
+        :param filename: File To Judge
         :return:
         """
         return os.path.exists(filename)
@@ -101,7 +108,7 @@ class PngQuant(object):
         """
         Open File and Get Data
 
-        :param filename: file to open and get data
+        :param filename: File To Open and Get Data
         :return:
         """
         with open(filename, 'r') as f:
@@ -109,9 +116,9 @@ class PngQuant(object):
 
     def save_tmp_file(self, data):
         """
-        Save Data as Tmp File
+        Save Data As Tmp File
 
-        :param data: data to save
+        :param data: Data to Save
         :return:
         """
         with open(self.tmp_file, 'w') as f:
@@ -119,24 +126,24 @@ class PngQuant(object):
 
     def copy_tmp_file(self, dst):
         """
-        Copy Tmp File to DST
+        Copy Tmp File To DST
 
-        :param dst: tmp image copy to
+        :param dst: Tmp Image Copy To
         :return:
         """
-        if self.file_exists(self.tmp_file):
+        if dst and self.file_exists(self.tmp_file):
             shutil.copyfile(self.tmp_file, dst)
 
-    def delete_tmp_file(self):
+    def delete_tmp_file(self, delete):
         """
         Delete Tmp File
 
         :return:
         """
-        if self.file_exists(self.tmp_file):
+        if delete and self.file_exists(self.tmp_file):
             os.remove(self.tmp_file)
 
-    def compress_proportion(self, origin_data, compressed_data, ndigits=None):
+    def compression_ratio(self, origin_len, compressed_len, ndigits=None):
         """
         Calculate Compress Proportion
 
@@ -145,65 +152,125 @@ class PngQuant(object):
         :param ndigits: float precision
         :return:
         """
-        origin_len, compressed_len = len(origin_data), len(compressed_data)
         return round((origin_len - compressed_len) / origin_len, ndigits or self.ndigits)
 
     def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
         """
-        Compress Image by Pass Image Data
+        Compress Image By Pass Image Data
 
-        :param data: image data
-        :param dst: tmp image copy to
+        :param data: Image Data
+        :param dst: Tmp Tmage Copy To
         :param ndeep: Compress Times
-        :param ndigits: float precision
-        :param delete: whether delete tmp image
+        :param ndigits: Float Precision
+        :param delete: Whether Delete Tmp Image
         :return:
         """
-        # Check Whether Data Exists
+        # Check Whether Pngquant Exist
+        if not self.file_exists(self.quant_file):
+            raise ValueError(self.err_pngquant)
+
+        # Check Whether Data Exist
         if not data:
-            raise ValueError(u'Lost Of Data')
-        # Save Data As tmp_file
+            raise ValueError(self.err_data)
+
+        # Save Data As Tmp File
         self.save_tmp_file(data)
-        # Assign Value Origin_data as Data
-        # & Ndeep as Pass or Default
-        # & Compressed as Empty
+
+        # Assign Value Origin_data As Data & Ndeep As Pass or Default & Compressed_data As Empty
         origin_data, ndeep, compressed_data = data, ndeep or self.ndeep, ''
-        # Exec Compressed Process Until
-        # Ndeep become Zero or Compressed Isn't Smaller than Earlier
-        while ndeep and (len(compressed_data) < len(origin_data)):
+        # Calculate Length Of Data, Origin_data, Compressed_data
+        data_len, origin_len, compressed_len = len(data), len(origin_data), 0
+
+        # Loop Exec Compressed Process Until
+        # Ndeep Become Zero Or Compressed Isn't Smaller Than Earlier
+        while ndeep and (compressed_len < origin_len):
             ndeep -= 1
-            # Or for First Compress
-            origin_data = compressed_data or origin_data
-            # Read image from stdin and send result to stdout.
-            compressed_data = subprocess.check_output(self.command_line, shell=True)
-            # Save Compressed Data As tmp_file
+            # Or For First Compress
+            origin_len = compressed_len or origin_len
+            # Read Image From 'stdin' And Send Result To 'stdout'.
+            #
+            # See: https://pngquant.org/
+            # --quality min-max
+            #   Instructs pngquant to use the least amount of colors required to meet or exceed the max quality.
+            #   If conversion results in quality below the min quality the image won't be saved
+            #   (if outputting to stdout, 24-bit original will be output) and pngquant will exit with status code 99.
+            #
+            # See: https://docs.python.org/2/library/subprocess.html#subprocess.check_output
+            # If the return code was non-zero it raises a CalledProcessError.
+            # The CalledProcessError object will have the return code in the returncode attribute
+            # and any output in the output attribute.
+            try:
+                compressed_data = subprocess.check_output(self.command_line, stderr=subprocess.STDOUT, shell=True)
+            except subprocess.CalledProcessError as e:
+                # raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+                compressed_data = origin_data
+            # Save Compressed Data As Tmp File
             self.save_tmp_file(compressed_data)
-        # Judge and Copy tmp_file
-        if dst:
-            self.copy_tmp_file(dst)
-        # Judge and Delete tmp_file
-        if delete:
-            self.delete_tmp_file()
-        return self.compress_proportion(data, compressed_data, ndigits), compressed_data
+            compressed_len = len(compressed_data)
+        else:
+            if compressed_len < data_len:
+                # Copy Tmp File
+                self.copy_tmp_file(dst)
+            # Delete Tmp File
+            self.delete_tmp_file(delete)
+
+        return (self.compression_ratio(data_len, compressed_len, ndigits), compressed_data) if compressed_len < data_len else (0, data)
 
     def quant_image(self, image=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True):
         """
-        Compress Image by Pass Image Path
+        Compress Image By Pass Image Path
 
-        :param image: image path
-        :param dst:
+        :param image: Image Path
+        :param dst: Dst Image
         :param ndeep: Compress Times
-        :param ndigits: float precision
-        :param override: whether override origin image
-        :param delete: whether delete tmp image
+        :param ndigits: Float Precision
+        :param override: Whether Override Origin Image
+        :param delete: Whether Delete Tmp Image
         :return:
         """
-        # Check Whether Image Exists
+        # Check Whether Pngquant Exist
+        if not self.file_exists(self.quant_file):
+            raise ValueError(self.err_pngquant)
+
+        # Check Whether Image Exist
         if not self.file_exists(image):
-            raise ValueError(u'Lost Of Image')
-        # Compress Image by Call function quant_data
-        # dst should pass image when override origin image
-        return self.quant_data(self.open_file(image), dst=dst or (image if override else None), ndeep=ndeep, ndigits=ndigits, delete=delete)
+            raise ValueError(self.err_image)
+
+        # Compress Image By Call Function quant_data
+        # Dst Should Pass Image When Override Origin Image
+        return self.quant_data(self.open_file(image), dst=dst or (override and image), ndeep=ndeep, ndigits=ndigits, delete=delete)
+
+    def quant_dir(self, dir=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True, topdown=True):
+        """
+        Compress Image Appointed Dir
+
+        :param dir: Appointed Dir
+        :param dst: Dst Dir
+        :param ndeep: Compress Times
+        :param ndigits: Float Precision
+        :param override: Whether Override Origin Image
+        :param delete: Whether Delete Tmp Image
+        :param topdown:
+        :return:
+        """
+        # Check Whether Pngquant Exist
+        if not self.file_exists(self.quant_file):
+            raise ValueError(self.err_pngquant)
+
+        results = []
+        # Traversal Dir To Compress Image One By One
+        for root, dirs, files in os.walk(dir, topdown):
+            for name in files:
+                filename = os.path.join(root, name)
+                print filename
+                # Whether File An Image, If Not, Do Nothing
+                if imghdr.what(filename):
+                    # Compress Image By Call Function quant_image
+                    # Dst Should Pass Dst + Name
+                    ratio, data = self.quant_image(filename, dst=dst and os.path.join(dst, name), ndeep=ndeep, ndigits=ndigits, override=override, delete=delete)
+                    print ratio
+                    results.append((filename, ratio, data))
+        return results
 
 
 # For backwards compatibility
@@ -211,3 +278,4 @@ _global_instance = PngQuant()
 config = _global_instance.config
 quant_data = _global_instance.quant_data
 quant_image = _global_instance.quant_image
+quant_dir = _global_instance.quant_dir
