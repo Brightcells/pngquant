@@ -31,6 +31,12 @@ import os
 import shutil
 import subprocess
 
+from cStringIO import StringIO
+try:
+    from PIL import Image
+except ImportError:
+    import Image
+
 
 class PngQuant(object):
     def set_command_line(self):
@@ -76,7 +82,7 @@ class PngQuant(object):
         :param max_quality: Max Quality
         :param ndeep: Compress Times
         :param ndigits: Float Precision
-        :param tmp_file: Tmp File Image Save As
+        :param tmp_file: TMP File Image Save As
         :return:
         """
         self.quant_file = quant_file or self.quant_file
@@ -116,7 +122,7 @@ class PngQuant(object):
 
     def save_tmp_file(self, data):
         """
-        Save Data As Tmp File
+        Save Data As TMP File
 
         :param data: Data to Save
         :return:
@@ -126,9 +132,9 @@ class PngQuant(object):
 
     def copy_tmp_file(self, dst):
         """
-        Copy Tmp File To DST
+        Copy TMP File To DST
 
-        :param dst: Tmp Image Copy To
+        :param dst: TMP Image Copy To
         :return:
         """
         if dst and self.file_exists(self.tmp_file):
@@ -136,7 +142,7 @@ class PngQuant(object):
 
     def delete_tmp_file(self, delete):
         """
-        Delete Tmp File
+        Delete TMP File
 
         :return:
         """
@@ -154,39 +160,24 @@ class PngQuant(object):
         """
         return round((origin_len - compressed_len) / origin_len, ndigits or self.ndigits)
 
-    def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
+    def quant_compress(self, data=None, ndeep=None):
         """
-        Compress Image By Pass Image Data
+        Compress Image Using Pngquant
 
-        :param data: Image Data
-        :param dst: Tmp Tmage Copy To
-        :param ndeep: Compress Times
-        :param ndigits: Float Precision
-        :param delete: Whether Delete Tmp Image
+        :param data:
+        :param ndeep:
         :return:
         """
-        # Check Whether Pngquant Exist
-        if not self.file_exists(self.quant_file):
-            raise ValueError(self.err_pngquant)
+        # Assign Value Origin_data As Data & Compressed_data As Empty
+        origin_data, compressed_data = data, ''
+        # Calculate Length of Origin_data, Compressed_data
+        origin_len, compressed_len = len(origin_data), 0
 
-        # Check Whether Data Exist
-        if not data:
-            raise ValueError(self.err_data)
-
-        # Save Data As Tmp File
-        self.save_tmp_file(data)
-
-        # Assign Value Origin_data As Data & Ndeep As Pass or Default & Compressed_data As Empty
-        origin_data, ndeep, compressed_data = data, ndeep or self.ndeep, ''
-        # Calculate Length Of Data, Origin_data, Compressed_data
-        data_len, origin_len, compressed_len = len(data), len(origin_data), 0
-
-        # Loop Exec Compressed Process Until
-        # Ndeep Become Zero Or Compressed Isn't Smaller Than Earlier
+        # Loop Exec Compressed Process Until Ndeep Become Zero Or Compressed Isn't Smaller Than Earlier
         while ndeep and (compressed_len < origin_len):
             ndeep -= 1
             # Or For First Compress
-            origin_len = compressed_len or origin_len
+            origin_data, origin_len = compressed_data or origin_data, compressed_len or origin_len
             # Read Image From 'stdin' And Send Result To 'stdout'.
             #
             # See: https://pngquant.org/
@@ -202,17 +193,78 @@ class PngQuant(object):
             try:
                 compressed_data = subprocess.check_output(self.command_line, stderr=subprocess.STDOUT, shell=True)
             except subprocess.CalledProcessError as e:
-                # raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
                 compressed_data = origin_data
-            # Save Compressed Data As Tmp File
+            # Save Compressed Data As TMP File
             self.save_tmp_file(compressed_data)
             compressed_len = len(compressed_data)
-        else:
-            if compressed_len < data_len:
-                # Copy Tmp File
-                self.copy_tmp_file(dst)
-            # Delete Tmp File
-            self.delete_tmp_file(delete)
+        return compressed_data, compressed_len
+
+    def pillow_compress(self, data=None, ndeep=None):
+        """
+        Compress Image Using Pillow.Save's Optimize Option
+
+        :param data:
+        :param ndeep:
+        :return:
+        """
+        # Assign Value Origin_data As Data & Compressed_data As Empty
+        origin_data, compressed_data = data, ''
+        # Calculate Length of Origin_data, Compressed_data
+        origin_len, compressed_len = len(origin_data), 0
+
+        # Get Image's Format
+        fmt = Image.open(StringIO(origin_data)).format.lower()
+
+        # Loop Exec Compressed Process Until Ndeep Become Zero Or Compressed Isn't Smaller Than Earlier
+        while ndeep and (compressed_len < origin_len):
+            ndeep -= 1
+            # Or For First Compress
+            origin_data, origin_len = compressed_data or origin_data, compressed_len or origin_len
+            # Pillow Image Save Optimize True
+            im, out = Image.open(StringIO(origin_data)), StringIO()
+            im.save(out, format=fmt, optimize=True, quality=75)
+            compressed_data = out.getvalue()
+            # Save Compressed Data As TMP File
+            self.save_tmp_file(compressed_data)
+            compressed_len = len(compressed_data)
+        return compressed_data, compressed_len
+
+    def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
+        """
+        Compress Image By Pass Image Data
+
+        :param data: Image Data
+        :param dst: TMP Tmage Copy To
+        :param ndeep: Compress Times
+        :param ndigits: Float Precision
+        :param delete: Whether Delete TMP Image
+        :return:
+        """
+        # Check Whether Pngquant Exist
+        if not self.file_exists(self.quant_file):
+            raise ValueError(self.err_pngquant)
+
+        # Check Whether Data Exist
+        if not data:
+            raise ValueError(self.err_data)
+
+        # Save Data As TMP File
+        self.save_tmp_file(data)
+
+        # Calculate Length Of Data & Assign Value Ndeep As Pass or Default
+        data_len, ndeep = len(data), ndeep or self.ndeep
+
+        # Compress Image Using Pngquant
+        # If Not Compressed
+        # Then Using Pillow.Save's Optimize Option
+        compressed_data, compressed_len = self.quant_compress(data, ndeep)
+        if compressed_len >= data_len:
+            compressed_data, compressed_len = self.pillow_compress(data, ndeep)
+
+        # Copy And Delete TMP File
+        if compressed_len < data_len:
+            self.copy_tmp_file(dst)
+        self.delete_tmp_file(delete)
 
         return (self.compression_ratio(data_len, compressed_len, ndigits), compressed_data) if compressed_len < data_len else (0, data)
 
@@ -225,7 +277,7 @@ class PngQuant(object):
         :param ndeep: Compress Times
         :param ndigits: Float Precision
         :param override: Whether Override Origin Image
-        :param delete: Whether Delete Tmp Image
+        :param delete: Whether Delete TMP Image
         :return:
         """
         # Check Whether Pngquant Exist
@@ -249,7 +301,7 @@ class PngQuant(object):
         :param ndeep: Compress Times
         :param ndigits: Float Precision
         :param override: Whether Override Origin Image
-        :param delete: Whether Delete Tmp Image
+        :param delete: Whether Delete TMP Image
         :param topdown:
         :return:
         """

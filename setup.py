@@ -4,7 +4,7 @@ from __future__ import with_statement
 from setuptools import setup
 
 
-version = '1.0.2'
+version = '1.0.3'
 
 
 setup(
@@ -21,7 +21,7 @@ setup(
 
     packages=['pngquant'],
     py_modules=[],
-    install_requires=[],
+    install_requires=['Pillow', ],
 
     classifiers=[
         "License :: OSI Approved :: BSD License",
