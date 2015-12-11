@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -24,18 +23,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
+from __future__ import division, absolute_import, print_function, unicode_literals
 
 import imghdr
 import os
 import shutil
 import subprocess
 
-from cStringIO import StringIO
 try:
     from PIL import Image
 except ImportError:
     import Image
+
+from .compat import StringIO
 
 
 class PngQuant(object):
@@ -59,7 +59,7 @@ class PngQuant(object):
         :return:
         """
         # Pngquant Config
-        self.command_str = ur'{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
+        self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
         self.quant_file = ''
         self.min_quality = 65
         self.max_quality = 80
@@ -69,9 +69,9 @@ class PngQuant(object):
         self.tmp_file = '/tmp/quant.tmp.png'
         self.command_line = self.set_command_line()
         # Error Description
-        self.err_data = u'data not found'
-        self.err_image = u'image not found'
-        self.err_pngquant = u'pngquant not found'
+        self.err_data = 'data not found'
+        self.err_image = 'image not found'
+        self.err_pngquant = 'pngquant not found'
 
     def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
         """
@@ -314,13 +314,13 @@ class PngQuant(object):
         for root, dirs, files in os.walk(dir, topdown):
             for name in files:
                 filename = os.path.join(root, name)
-                print filename
+                print(filename)
                 # Whether File An Image, If Not, Do Nothing
                 if imghdr.what(filename):
                     # Compress Image By Call Function quant_image
                     # Dst Should Pass Dst + Name
                     ratio, data = self.quant_image(filename, dst=dst and os.path.join(dst, name), ndeep=ndeep, ndigits=ndigits, override=override, delete=delete)
-                    print ratio
+                    print(ratio)
                     results.append((filename, ratio, data))
         return results
 
