@@ -1,5 +1,7 @@
 # Pngquant
-A Python Wrapper of pngquant
+pngquant is a command-line utility and a library for lossy compression of PNG images.
+
+And This Library Is A Python Wrapper Of Pngquant
 
 * [Lossy PNG compressor — pngquant command and libimagequant library](https://github.com/pornel/pngquant)
 
