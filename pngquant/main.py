@@ -23,18 +23,36 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import division
 
 import imghdr
 import os
 import shutil
 import subprocess
 
+# AttributeError: 'module' object has no attribute 'check_output'
+# http://stackoverflow.com/questions/4814970/subprocess-check-output-doesnt-seem-to-exist-python-2-6-5/13160748#13160748
+if 'check_output' not in dir(subprocess):  # duck punch it in!
+    def f(*popenargs, **kwargs):
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get('args')
+            if cmd is None:
+                cmd = popenargs[0]
+            raise subprocess.CalledProcessError(retcode, cmd)
+        return output
+    subprocess.check_output = f
+
 # See http://stackoverflow.com/questions/31064981/python3-error-initial-value-must-be-str-or-none
 # TypeError: initial_value must be str or None, not bytes.
 # The StringIO and cStringIO modules are gone.
 # Instead, import the io module and use io.StringIO or io.BytesIO for text and data respectively.
 from io import BytesIO
+
 try:
     from PIL import Image
 except ImportError:
@@ -205,7 +223,7 @@ class PngQuant(object):
             # and any output in the output attribute.
             try:
                 compressed_data = subprocess.check_output(self.command_line, stderr=subprocess.STDOUT, shell=True)
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 compressed_data = origin_data
             # Save Compressed Data As TMP File
             self.save_tmp_file(compressed_data)
