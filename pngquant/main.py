@@ -30,12 +30,15 @@ import os
 import shutil
 import subprocess
 
+# See http://stackoverflow.com/questions/31064981/python3-error-initial-value-must-be-str-or-none
+# TypeError: initial_value must be str or None, not bytes.
+# The StringIO and cStringIO modules are gone.
+# Instead, import the io module and use io.StringIO or io.BytesIO for text and data respectively.
+from io import BytesIO
 try:
     from PIL import Image
 except ImportError:
     import Image
-
-from .compat import StringIO
 
 
 class PngQuant(object):
@@ -117,7 +120,17 @@ class PngQuant(object):
         :param filename: File To Open and Get Data
         :return:
         """
-        with open(filename, 'r') as f:
+        # UnicodeDecodeError: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte
+        #
+        # https://docs.python.org/3/library/functions.html#open
+        # 'r'	open for reading (default)
+        # 't'	text mode (default)
+        # 'b'	binary mode
+        #
+        # In text mode (the default, or when 't' is included in the mode argument),
+        # the contents of the file are returned as str,
+        # the bytes having been first decoded using a platform-dependent encoding or using the specified encoding if given.
+        with open(filename, 'rb') as f:
             return f.read()
 
     def save_tmp_file(self, data):
@@ -127,7 +140,7 @@ class PngQuant(object):
         :param data: Data to Save
         :return:
         """
-        with open(self.tmp_file, 'w') as f:
+        with open(self.tmp_file, 'wb') as f:
             f.write(data)
 
     def copy_tmp_file(self, dst):
@@ -213,7 +226,7 @@ class PngQuant(object):
         origin_len, compressed_len = len(origin_data), 0
 
         # Get Image's Format
-        fmt = Image.open(StringIO(origin_data)).format.lower()
+        fmt = Image.open(BytesIO(origin_data)).format.lower()
 
         # Loop Exec Compressed Process Until Ndeep Become Zero Or Compressed Isn't Smaller Than Earlier
         while ndeep and (compressed_len < origin_len):
@@ -221,7 +234,7 @@ class PngQuant(object):
             # Or For First Compress
             origin_data, origin_len = compressed_data or origin_data, compressed_len or origin_len
             # Pillow Image Save Optimize True
-            im, out = Image.open(StringIO(origin_data)), StringIO()
+            im, out = Image.open(BytesIO(origin_data)), BytesIO()
             im.save(out, format=fmt, optimize=True, quality=75)
             compressed_data = out.getvalue()
             # Save Compressed Data As TMP File

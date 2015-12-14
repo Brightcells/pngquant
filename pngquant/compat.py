@@ -19,13 +19,6 @@ is_py2 = (_ver[0] == 2)
 #: Python 3.x?
 is_py3 = (_ver[0] == 3)
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    # StringIO does not support Python 3.x
-    # See http://stackoverflow.com/questions/11914472/stringio-in-python3
-    from io import StringIO
-
 # ---------
 # Specifics
 # ---------
