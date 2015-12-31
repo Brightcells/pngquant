@@ -356,7 +356,6 @@ class PngQuant(object):
         return results
 
 
-# For backwards compatibility
 _global_instance = PngQuant()
 config = _global_instance.config
 quant_data = _global_instance.quant_data

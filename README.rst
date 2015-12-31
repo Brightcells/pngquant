@@ -2,14 +2,19 @@
 pngquant
 ========
 
-pngquant is a command-line utility and a library for lossy compression of PNG images.
+Pngquant is a command-line utility and a library for lossy compression of PNG images.
 
 And This Library Is A Python Wrapper Of Pngquant
 
-Install Pngquant First. See https://pngquant.org/
+Install Pngquant
+================
 
-Installation
-============
+* https://pngquant.org/
+
+* [pngquant 2.0 for ubuntu 12.04 not available](http://askubuntu.com/questions/469171/pngquant-2-0-for-ubuntu-12-04-not-available)
+
+Install Python Wrapper Of Pngquant
+==================================
 
 ::
 
