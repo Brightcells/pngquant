@@ -10,9 +10,10 @@ And This Library Is A Python Wrapper Of Pngquant
   * https://pngquant.org/
   * [pngquant 2.0 for ubuntu 12.04 not available](http://askubuntu.com/questions/469171/pngquant-2-0-for-ubuntu-12-04-not-available)
 * Install Python Wrapper Of Pngquant
-```
-pip install pngquant
-```
+
+  ```
+  pip install pngquant
+  ```
 
 ## Usage
 ```
