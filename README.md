@@ -1,5 +1,5 @@
 # Pngquant
-pngquant is a command-line utility and a library for lossy compression of PNG images.
+Pngquant is a command-line utility and a library for lossy compression of PNG images.
 
 And This Library Is A Python Wrapper Of Pngquant
 
