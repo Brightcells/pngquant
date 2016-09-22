@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
 from setuptools import setup
 
 
@@ -11,7 +10,7 @@ setup(
     name='pngquant',
     version=version,
     keywords='',
-    description="A Python Wrapper of pngquant",
+    description='A Python Wrapper of pngquant',
     long_description=open('README.rst').read(),
 
     url='https://github.com/Brightcells/pngquant',
