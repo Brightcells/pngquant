@@ -16,7 +16,7 @@ And This Library Is A Python Wrapper Of Pngquant
   ```
 
 ## Usage
-```
+```python
 import pngquant
 
 pngquant.config('~/pngquant/pngquant')
@@ -24,7 +24,7 @@ pngquant.quant_image('~/pngquant/pngquant/pngquant.png')
 ```
 
 ## Method
-```
+```python
 def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
 
 def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
