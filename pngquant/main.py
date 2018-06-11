@@ -6,6 +6,7 @@ import imghdr
 import os
 import shutil
 import subprocess
+import tempfile
 # See http://stackoverflow.com/questions/31064981/python3-error-initial-value-must-be-str-or-none
 # TypeError: initial_value must be str or None, not bytes.
 # The StringIO and cStringIO modules are gone.
@@ -65,7 +66,7 @@ class PngQuant(object):
         # Compress Config
         self.ndeep = 100
         self.ndigits = 4
-        self.tmp_file = '/tmp/quant.tmp.png'
+        self.tmp_file = os.path.join(tempfile.gettempdir(), 'quant.tmp.png')
         self.command_line = self.set_command_line()
         # Error Description
         self.err_data = 'data not found'
