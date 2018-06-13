@@ -62,7 +62,7 @@ class PngQuant(object):
         # Pngquant Config
         self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
         #By default, look for binary pngquant in PATH
-        self.quant_file = find_executable('pngquant')
+        self.quant_file = find_executable('pngquant') or '/usr/bin/pngquant' 
         self.min_quality = 65
         self.max_quality = 80
         # Compress Config
