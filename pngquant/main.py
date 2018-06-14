@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from distutils.spawn import find_executable
 # See http://stackoverflow.com/questions/31064981/python3-error-initial-value-must-be-str-or-none
 # TypeError: initial_value must be str or None, not bytes.
 # The StringIO and cStringIO modules are gone.
@@ -60,7 +61,8 @@ class PngQuant(object):
         """
         # Pngquant Config
         self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
-        self.quant_file = '/usr/bin/pngquant'
+        #By default, look for binary pngquant in PATH
+        self.quant_file = find_executable('pngquant') or '/usr/bin/pngquant' 
         self.min_quality = 65
         self.max_quality = 80
         # Compress Config
