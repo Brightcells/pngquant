@@ -50,6 +50,7 @@ class PngQuant(object):
             quant_file=self.quant_file,
             min_quality=self.min_quality,
             max_quality=self.max_quality,
+            speed = self.speed,
             tmp_file=self.tmp_file,
         )
 
@@ -60,7 +61,7 @@ class PngQuant(object):
         :return:
         """
         # Pngquant Config
-        self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --force - < {tmp_file}'
+        self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --speed={speed} --force - < {tmp_file}'
         #By default, look for binary pngquant in PATH
         self.quant_file = find_executable('pngquant') or '/usr/bin/pngquant' 
         self.min_quality = 65
@@ -68,6 +69,7 @@ class PngQuant(object):
         # Compress Config
         self.ndeep = 100
         self.ndigits = 4
+        self.speed = 3
         self.tmp_file = os.path.join(tempfile.gettempdir(), 'quant.tmp.png')
         self.command_line = self.set_command_line()
         # Error Description
@@ -75,7 +77,7 @@ class PngQuant(object):
         self.err_image = 'image not found'
         self.err_pngquant = 'pngquant not found'
 
-    def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
+    def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None, speed=None):
         """
         Config Set
 
@@ -92,6 +94,7 @@ class PngQuant(object):
         self.max_quality = max_quality or self.max_quality
         self.ndeep = ndeep or self.ndeep
         self.ndigits = ndigits or self.ndigits
+        self.speed = speed or self.speed
         self.tmp_file = tmp_file or self.tmp_file
         self.command_line = self.set_command_line()
         return {
@@ -99,6 +102,7 @@ class PngQuant(object):
             'min_quality': self.min_quality,
             'max_quality': self.max_quality,
             'ndeep': self.ndeep,
+            'speed': self.speed,
             'tmp_file': self.tmp_file,
             'command_line': self.set_command_line(),
         }
