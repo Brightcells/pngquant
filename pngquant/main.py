@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import uuid
 from distutils.spawn import find_executable
 # See http://stackoverflow.com/questions/31064981/python3-error-initial-value-must-be-str-or-none
 # TypeError: initial_value must be str or None, not bytes.
@@ -62,7 +63,7 @@ class PngQuant(object):
         """
         # Pngquant Config
         self.command_str = '{quant_file} --quality={min_quality}-{max_quality} --speed={speed} --force - < {tmp_file}'
-        #By default, look for binary pngquant in PATH
+        # By default, look for binary pngquant in PATH
         self.quant_file = find_executable('pngquant') or '/usr/bin/pngquant' 
         self.min_quality = 65
         self.max_quality = 80
@@ -70,7 +71,7 @@ class PngQuant(object):
         self.ndeep = 100
         self.ndigits = 4
         self.speed = 3
-        self.tmp_file = os.path.join(tempfile.gettempdir(), 'quant.tmp.png')
+        self.tmp_file = os.path.join(tempfile.gettempdir(), '{0}.quant.tmp.png'.format(uuid.uuid4().hex))
         self.command_line = self.set_command_line()
         # Error Description
         self.err_data = 'data not found'
