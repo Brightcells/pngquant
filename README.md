@@ -26,7 +26,7 @@ pngquant.quant_image('~/pngquant/pngquant/pngquant.png')
 
 ## Method
 ```python
-def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None):
+def config(self, quant_file=None, min_quality=None, max_quality=None, ndeep=None, ndigits=None, tmp_file=None, speed=None):
 
 def quant_data(self, data=None, dst=None, ndeep=None, ndigits=None, delete=True):
 
