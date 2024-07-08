@@ -1,6 +1,1 @@
-from pngquant.main import (
-    config,
-    quant_data,
-    quant_image,
-    quant_dir,
-)
+from pngquant.main import config, quant_data, quant_dir, quant_image
