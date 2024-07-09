@@ -41,7 +41,10 @@ except ImportError:
 
 
 class PngQuant(object):
-    def set_command_line(self):
+    def __tmpfile(self):
+        return os.path.join(tempfile.gettempdir(), '{0}.quant.tmp.png'.format(uuid.uuid4().hex))
+
+    def set_command_line(self, tmp_file=None):
         """
         Set Quant CMD
 
@@ -52,7 +55,7 @@ class PngQuant(object):
             min_quality=self.min_quality,
             max_quality=self.max_quality,
             speed=self.speed,
-            tmp_file=self.tmp_file,
+            tmp_file=tmp_file or self.tmp_file or self.__tmpfile(),
         )
 
     def __init__(self):
@@ -71,8 +74,8 @@ class PngQuant(object):
         self.ndeep = 100
         self.ndigits = 4
         self.speed = 3
-        self.tmp_file = os.path.join(tempfile.gettempdir(), '{0}.quant.tmp.png'.format(uuid.uuid4().hex))
-        self.command_line = self.set_command_line()
+        self.tmp_file = None
+        self.command_line = None
         # Error Description
         self.err_data = 'data not found'
         self.err_image = 'image not found'
@@ -97,7 +100,6 @@ class PngQuant(object):
         self.ndigits = ndigits or self.ndigits
         self.speed = speed or self.speed
         self.tmp_file = tmp_file or self.tmp_file
-        self.command_line = self.set_command_line()
         return {
             'quant_file': self.quant_file,
             'min_quality': self.min_quality,
@@ -137,34 +139,34 @@ class PngQuant(object):
         with open(filename, 'rb') as f:
             return f.read()
 
-    def save_tmp_file(self, data):
+    def save_tmp_file(self, data, tmp_file=None):
         """
         Save Data As TMP File
 
         :param data: Data to Save
         :return:
         """
-        with open(self.tmp_file, 'wb') as f:
+        with open(tmp_file, 'wb') as f:
             f.write(data)
 
-    def copy_tmp_file(self, dst):
+    def copy_tmp_file(self, dst, tmp_file=None):
         """
         Copy TMP File To DST
 
         :param dst: TMP Image Copy To
         :return:
         """
-        if dst and self.file_exists(self.tmp_file):
-            shutil.copyfile(self.tmp_file, dst)
+        if dst and self.file_exists(tmp_file):
+            shutil.copyfile(tmp_file, dst)
 
-    def delete_tmp_file(self, delete):
+    def delete_tmp_file(self, delete, tmp_file=None):
         """
         Delete TMP File
 
         :return:
         """
-        if delete and self.file_exists(self.tmp_file):
-            os.remove(self.tmp_file)
+        if delete and self.file_exists(tmp_file):
+            os.remove(tmp_file)
 
     def compression_ratio(self, origin_len, compressed_len, ndigits=None):
         """
@@ -177,7 +179,7 @@ class PngQuant(object):
         """
         return round((origin_len - compressed_len) / origin_len, ndigits or self.ndigits)
 
-    def quant_compress(self, data=None, ndeep=None):
+    def quant_compress(self, data=None, ndeep=None, tmp_file=None):
         """
         Compress Image Using Pngquant
 
@@ -212,11 +214,11 @@ class PngQuant(object):
             except subprocess.CalledProcessError:
                 compressed_data = origin_data
             # Save Compressed Data As TMP File
-            self.save_tmp_file(compressed_data)
+            self.save_tmp_file(compressed_data, tmp_file=tmp_file)
             compressed_len = len(compressed_data)
         return compressed_data, compressed_len
 
-    def pillow_compress(self, data=None, ndeep=None):
+    def pillow_compress(self, data=None, ndeep=None, tmp_file=None):
         """
         Compress Image Using Pillow.Save's Optimize Option
 
@@ -242,7 +244,7 @@ class PngQuant(object):
             im.save(out, format=fmt, optimize=True, quality=75)
             compressed_data = out.getvalue()
             # Save Compressed Data As TMP File
-            self.save_tmp_file(compressed_data)
+            self.save_tmp_file(compressed_data, tmp_file=tmp_file)
             compressed_len = len(compressed_data)
         return compressed_data, compressed_len
 
@@ -265,8 +267,12 @@ class PngQuant(object):
         if not data:
             raise ValueError(self.err_data)
 
+        # Different path for tmp file
+        tmp_file = self.tmp_file or self.__tmpfile()
+        self.command_line = self.set_command_line(tmp_file)
+
         # Save Data As TMP File
-        self.save_tmp_file(data)
+        self.save_tmp_file(data, tmp_file=tmp_file)
 
         # Calculate Length Of Data & Assign Value Ndeep As Pass or Default
         data_len, ndeep = len(data), ndeep or self.ndeep
@@ -274,14 +280,14 @@ class PngQuant(object):
         # Compress Image Using Pngquant
         # If Not Compressed
         # Then Using Pillow.Save's Optimize Option
-        compressed_data, compressed_len = self.quant_compress(data, ndeep)
+        compressed_data, compressed_len = self.quant_compress(data, ndeep, tmp_file=tmp_file)
         if compressed_len >= data_len:
-            compressed_data, compressed_len = self.pillow_compress(data, ndeep)
+            compressed_data, compressed_len = self.pillow_compress(data, ndeep, tmp_file=tmp_file)
 
         # Copy And Delete TMP File
         if compressed_len < data_len:
-            self.copy_tmp_file(dst)
-        self.delete_tmp_file(delete)
+            self.copy_tmp_file(dst, tmp_file=tmp_file)
+        self.delete_tmp_file(delete, tmp_file=tmp_file)
 
         return (self.compression_ratio(data_len, compressed_len, ndigits), compressed_data) if compressed_len < data_len else (0, data)
 
@@ -331,13 +337,11 @@ class PngQuant(object):
         for root, dirs, files in os.walk(dir, topdown):
             for name in files:
                 filename = os.path.join(root, name)
-                print(filename)
                 # Whether File An Image, If Not, Do Nothing
                 if imghdr.what(filename):
                     # Compress Image By Call Function quant_image
                     # Dst Should Pass Dst + Name
                     ratio, data = self.quant_image(filename, dst=dst and os.path.join(dst, name), ndeep=ndeep, ndigits=ndigits, override=override, delete=delete)
-                    print(ratio)
                     results.append((filename, ratio, data))
         return results
 
