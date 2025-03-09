@@ -34,3 +34,7 @@ def quant_image(self, image=None, dst=None, ndeep=None, ndigits=None, override=T
 
 def quant_dir(self, dir=None, dst=None, ndeep=None, ndigits=None, override=True, delete=True, topdown=True):
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Brightcells/pngquant&type=Date)](https://star-history.com/#Brightcells/pngquant&Date)
