@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-import imghdr
+import puremagic
 import os
 import shutil
 import subprocess
@@ -338,7 +338,7 @@ class PngQuant(object):
             for name in files:
                 filename = os.path.join(root, name)
                 # Whether File An Image, If Not, Do Nothing
-                if imghdr.what(filename):
+                if puremagic.what(filename):
                     # Compress Image By Call Function quant_image
                     # Dst Should Pass Dst + Name
                     ratio, data = self.quant_image(filename, dst=dst and os.path.join(dst, name), ndeep=ndeep, ndigits=ndigits, override=override, delete=delete)

@@ -20,7 +20,7 @@ setup(
 
     packages=['pngquant'],
     py_modules=[],
-    install_requires=['Pillow', ],
+    install_requires=['Pillow', 'puremagic', ],
 
     classifiers=[
         "License :: OSI Approved :: BSD License",
