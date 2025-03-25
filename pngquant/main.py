@@ -118,7 +118,7 @@ class PngQuant(object):
         :param filename: File To Judge
         :return:
         """
-        return os.path.exists(filename)
+        return os.path.exists(os.path.expanduser(filename))
 
     def open_file(self, filename):
         """
