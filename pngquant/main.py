@@ -44,6 +44,9 @@ class PngQuant(object):
     def __tmpfile(self):
         return os.path.join(tempfile.gettempdir(), '{0}.quant.tmp.png'.format(uuid.uuid4().hex))
 
+    def __absolute_path(self, path):
+        return path and os.path.expanduser(path)
+
     def set_command_line(self, tmp_file=None):
         """
         Set Quant CMD
@@ -93,13 +96,13 @@ class PngQuant(object):
         :param tmp_file: TMP File Image Save As
         :return:
         """
-        self.quant_file = quant_file or self.quant_file
+        self.quant_file = self.__absolute_path(quant_file or self.quant_file)
         self.min_quality = min_quality or self.min_quality
         self.max_quality = max_quality or self.max_quality
         self.ndeep = ndeep or self.ndeep
         self.ndigits = ndigits or self.ndigits
         self.speed = speed or self.speed
-        self.tmp_file = tmp_file or self.tmp_file
+        self.tmp_file = self.__absolute_path(tmp_file or self.tmp_file)
         return {
             'quant_file': self.quant_file,
             'min_quality': self.min_quality,
@@ -117,7 +120,7 @@ class PngQuant(object):
         :param filename: File To Judge
         :return:
         """
-        return os.path.exists(os.path.expanduser(filename))
+        return os.path.exists(filename)
 
     def open_file(self, filename):
         """
@@ -259,6 +262,8 @@ class PngQuant(object):
         :param delete: Whether Delete TMP Image
         :return:
         """
+        dst = self.__absolute_path(dst)
+
         # Check Whether Pngquant Exist
         if not self.file_exists(self.quant_file):
             raise ValueError(self.err_pngquant)
@@ -303,6 +308,9 @@ class PngQuant(object):
         :param delete: Whether Delete TMP Image
         :return:
         """
+        image = self.__absolute_path(image)
+        dst = self.__absolute_path(dst)
+
         # Check Whether Pngquant Exist
         if not self.file_exists(self.quant_file):
             raise ValueError(self.err_pngquant)
@@ -328,6 +336,9 @@ class PngQuant(object):
         :param topdown:
         :return:
         """
+        dir = self.__absolute_path(dir)
+        dst = self.__absolute_path(dst)
+
         # Check Whether Pngquant Exist
         if not self.file_exists(self.quant_file):
             raise ValueError(self.err_pngquant)
