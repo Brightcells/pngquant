@@ -2,7 +2,6 @@
 
 from __future__ import division
 
-import puremagic
 import os
 import shutil
 import subprocess
@@ -14,6 +13,8 @@ from distutils.spawn import find_executable
 # The StringIO and cStringIO modules are gone.
 # Instead, import the io module and use io.StringIO or io.BytesIO for text and data respectively.
 from io import BytesIO
+
+import puremagic
 
 
 # AttributeError: 'module' object has no attribute 'check_output'
