@@ -20,7 +20,7 @@ setup(
 
     packages=['pngquant'],
     py_modules=[],
-    install_requires=['Pillow<=6.2.2', ],
+    install_requires=['Pillow', ],
 
     classifiers=[
         "License :: OSI Approved :: BSD License",
